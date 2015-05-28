@@ -1,0 +1,4 @@
+s3cmd - file uploads and downloads to/from S3
+openssl - encryption and decryptiion is done by shelling out to openssl
+nginx - for serving files from a directory that has the uploads
+varnish - not necessary but nice to have for routing and caching
