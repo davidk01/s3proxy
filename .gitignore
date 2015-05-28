@@ -1,4 +1,5 @@
 uploads/
+log/
 *.rpm
 *.swp
 .vagrant/
