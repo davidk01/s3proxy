@@ -6,8 +6,8 @@ require 'openssl'
 require_relative '../lib/constants'
 
 files = Dir[File.join(TOENCRYPT, '**', '*')]
-key_digest = Digest::SHA1.hexdigest(File.read(PRIVATEKEY))
 key = File.read(PRIVATEKEY)
+key_digest = Digest::SHA1.hexdigest(File.read(PRIVATEKEY))
 # Acquire lock and encrypt the file into encrypting folder and then atomically move it into place
 files.each do |filename|
   path = Pathname.new(filename).cleanpath

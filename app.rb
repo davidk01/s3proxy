@@ -62,13 +62,12 @@ class App < Sinatra::Base
     # We need to figure out which key we used to encrypt the artifact
     key, key_digest = nil, nil
     (keys = Dir["keys/*"]).each do |key_path|
-      key_digest = Digest::SHA1.hexdigest(File.read(key_path))
+      key = File.read(key_path)
+      key_digest = Digest::SHA1.hexdigest(key)
       # See if the path exists
       test_path = Pathname.new(File.join(BUCKET, key_digest, source)).cleanpath
       s3_response = `s3cmd ls 's3://#{test_path}'`
       if !s3_response.empty?
-        # It exists so save the key because
-        key = key_path
         break
       end
     end
@@ -78,7 +77,7 @@ class App < Sinatra::Base
     if CONFIG['encryption']
       cipher = OpenSSL::Cipher.new('aes-256-gcm')
       cipher.decrypt
-      cipher.key = File.read(key)
+      cipher.key = key
       iv_path = "#{decryption_source}-iv"
       iv = File.read(iv_path)
       cipher.iv = iv
