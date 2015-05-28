@@ -33,18 +33,17 @@ files.each do |filename|
         encrypted_data = cipher.update(data) + cipher.final
         File.open(encrypting_path, 'w') {|f| f.write(encrypted_data)}
         FileUtils.mv(encrypting_path, encrypted_path, :force => true)
-        FileUtils.rm(path)
       else
-        FileUtils.mv(path, encrypted_path, :force => true)
+        FileUtils.ln_s(encrypted_path, path, :force => true)
       end
     end
     # Upload encrypted artifact to S3 and and remove it from file system
     s3path = Pathname.new(File.join(BUCKET, encrypted_path.to_s.sub(ENCRYPTED, ''))).cleanpath
     if CONFIG['encryption']
-      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}'`
+      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' && rm '#{path}'`
       `s3cmd put -F '#{iv_path}' 's3://#{s3path}-iv' && rm '#{iv_path}'`
     else
-      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}'`
+      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' &7 rm '#{path}'`
     end
   end
 end
