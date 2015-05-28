@@ -34,7 +34,10 @@ files.each do |filename|
         File.open(encrypting_path, 'w') {|f| f.write(encrypted_data)}
         FileUtils.mv(encrypting_path, encrypted_path, :force => true)
       else
-        FileUtils.ln_s(encrypted_path, path, :force => true)
+        bin_dir = File.expand_path(File.dirname __FILE__)
+        link_file = File.join(bin_dir, '..', encrypted_path)
+        abs_path = File.join(bin_dir, '..', path)
+        FileUtils.ln_s(abs_path, link_file, :force => true)
       end
     end
     # Upload encrypted artifact to S3 and and remove it from file system
