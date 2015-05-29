@@ -1,20 +1,21 @@
 require 'rubygems'
 require 'pathname'
 require 'fileutils'
-require 'digest/sha1'
 require 'openssl'
 require_relative '../lib/constants'
 
 files = Dir[File.join(TOENCRYPT, '**', '*')]
-key = File.read(PRIVATEKEY)
-key_digest = Digest::SHA1.hexdigest(File.read(PRIVATEKEY))
+key_number = Pathname.new(PRIVATEKEY).readlink.to_s
+key = File.read("keys/#{key_nuymber}")
 # Acquire lock and encrypt the file into encrypting folder and then atomically move it into place
 files.each do |filename|
   path = Pathname.new(filename).cleanpath
   if !path.directory?
     # All the paths
-    encrypting_path = Pathname.new(path.to_s.sub(TOENCRYPT, File.join(ENCRYPTING, key_digest))).cleanpath
-    encrypted_path = Pathname.new(path.to_s.sub(TOENCRYPT, File.join(ENCRYPTED, key_digest))).cleanpath
+    encrypting_path = Pathname.new(path.to_s.sub(TOENCRYPT, File.join(ENCRYPTING, key_number))).cleanpath
+    encrypted_path = Pathname.new(path.to_s.sub(TOENCRYPT, File.join(ENCRYPTED, key_number))).cleanpath
+    upload_path = Pathname.new(path.to_s.sub(TOENCRYPT, UPLOADS)).cleanpath
+    s3path = Pathname.new(File.join(BUCKET, encrypted_path.to_s.sub(ENCRYPTED, ''))).cleanpath
     iv_path = Pathname.new("#{encrypted_path}-iv").cleanpath
     lock = Pathname.new(path.to_s.sub(TOENCRYPT, LOCKS)).cleanpath
     # All the directories
@@ -41,12 +42,26 @@ files.each do |filename|
       end
     end
     # Upload encrypted artifact to S3 and and remove it from file system
-    s3path = Pathname.new(File.join(BUCKET, encrypted_path.to_s.sub(ENCRYPTED, ''))).cleanpath
     if CONFIG['encryption']
       `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' && rm '#{path}'`
+      if $?.exitstatus > 0
+        raise StandardError, "Something went wrong when uploading #{encrypted_path} to #{s3path}"
+      end
       `s3cmd put -F '#{iv_path}' 's3://#{s3path}-iv' && rm '#{iv_path}'`
+      if $?.exitstatus > 0
+        raise StandardError, "Something went wrong when uploading IV #{iv_path}."
+      end
     else
       `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' &7 rm '#{path}'`
+      if $?.exitstatus > 0
+        raise StandardError, "Something went wrong when uploading #{encrypted_path} to #{s3path}."
+      end
     end
+    # Now leave a marker at the old upload place
+    FileUtils.rm(encrypted_path, :force => true)
+    FileUtils.rm(path, :force => true)
+    FileUtils.rm(iv_path, :force => true)
+    FileUtils.rm(upload_path, :force => true)
+    FileUtils.ln_s(upload_path.to_s.sub(UPLOADS, key_number), upload_path, :force => true)
   end
 end

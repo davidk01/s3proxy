@@ -42,7 +42,6 @@ class App < Sinatra::Base
       FileUtils.mv(tempfile, path, :force => true)
       FileUtils.chmod("go+r", path)
       symlink_source = Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), path)).cleanpath
-      FileUtils.symlink(symlink_source, encryption_path)
       FileUtils.rm(uploading_path)
     end
     "File saved\n"
@@ -54,24 +53,21 @@ class App < Sinatra::Base
   get "/*" do
     splat = check_and_escape_splat(params['splat'])
     source = Pathname.new(File.join(*splat)).cleanpath
-    decryption_source = Pathname.new(File.join(TODECRYPT, *splat)).cleanpath
-    upload_destination = Pathname.new(File.join(UPLOADS, *splat)).cleanpath
+    decryption_source = Pathname.new(File.join(TODECRYPT, source)).cleanpath
+    upload_destination = Pathname.new(File.join(UPLOADS, source)).cleanpath
+    # If the path is not a symlink then there is no point in checking S3
+    # because whenever we upload anything to S3 we leave a symlink in its place
+    if !upload_destination.symlink?
+      status 404
+      return "We don't have a record of that file: #{source}."
+    end
+    marker_link = upload_destination.readlink
     directories = [decryption_directory = decryption_source.dirname, 
                    upload_directory = upload_destination.dirname]
     directories.each {|dir| FileUtils.mkdir_p(dir) unless dir.exist?}
     # We need to figure out which key we used to encrypt the artifact
-    key, key_digest = nil, nil
-    (keys = Dir["keys/*"]).each do |key_path|
-      key = File.read(key_path)
-      key_digest = Digest::SHA1.hexdigest(key)
-      # See if the path exists
-      test_path = Pathname.new(File.join(BUCKET, key_digest, source)).cleanpath
-      s3_response = `s3cmd ls 's3://#{test_path}'`
-      if !s3_response.empty?
-        break
-      end
-    end
-    s3_get_path = Pathname.new(File.join(BUCKET, key_digest, source)).cleanpath
+    s3_get_path = Pathname.new(File.join(BUCKET, marker_link)).cleanpath
+    key = File.read(Pathname.new(File.join('keys', marker_link.to_s.split('/').first)).cleanpath)
     `s3cmd get 's3://#{s3_get_path}' '#{decryption_source}'`
     `s3cmd get 's3://#{s3_get_path}-iv' '#{decryption_source}-iv'`
     if CONFIG['encryption']
