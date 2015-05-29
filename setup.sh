@@ -29,13 +29,13 @@ fi
 
 # nginx
 if [[ ! $(curl localhost:8080 | grep nginx) ]]; then
-  echo "NGINX is not running."
+  echo "NGINX is not running. Make sure it is running on port 8080 and points to /opt/s3proxy/uploads for root path."
   exit 1
 fi
 
 # varnish
 if [[ ! $(curl localhost | grep Varnish) ]]; then
-  echo "Varnish not running."
+  echo "Varnish not running. Make sure /etc/varnish/varnish.params has VARNISH_LISTEN_PORT=80"
   exit 1
 fi
 
