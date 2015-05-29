@@ -8,6 +8,7 @@ PRIVATEKEY = File.join(KEYS, 'latest')
 LOCKS = 'locks'
 UPLOADS = 'uploads'
 UPLOADING = 'uploading'
+DECRYPTING = 'decrypting'
 TOENCRYPT = 'to_encrypt'
 TODECRYPT = 'to_decrypt'
 ENCRYPTING = 'encrypting'

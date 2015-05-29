@@ -54,6 +54,7 @@ class App < Sinatra::Base
     splat = check_and_escape_splat(params['splat'])
     source = Pathname.new(File.join(*splat)).cleanpath
     decryption_source = Pathname.new(File.join(TODECRYPT, source)).cleanpath
+    decryption_temp = Pathname.new(File.join(DECRYPTING, source)).cleanpath
     upload_destination = Pathname.new(File.join(UPLOADS, source)).cleanpath
     # If the path is not a symlink then there is no point in checking S3
     # because whenever we upload anything to S3 we leave a symlink in its place
@@ -63,7 +64,8 @@ class App < Sinatra::Base
     end
     marker_link = upload_destination.readlink
     directories = [decryption_directory = decryption_source.dirname, 
-                   upload_directory = upload_destination.dirname]
+                   upload_directory = upload_destination.dirname, 
+                   decryption_temp_dir = decryption_temp.dirname]
     directories.each {|dir| FileUtils.mkdir_p(dir) unless dir.exist?}
     # We need to figure out which key we used to encrypt the artifact
     s3_get_path = marker_link
@@ -79,7 +81,8 @@ class App < Sinatra::Base
       cipher.iv = iv
       encrypted_data = File.read(decryption_source)
       decrypted_data = cipher.update(encrypted_data)
-      File.open(upload_destination, 'w') {|f| f.write(decrypted_data)}
+      File.open(decryption_temp, 'w') {|f| f.write(decrypted_data)}
+      FileUtils.mv(decryption_temp, upload_destination, :force => true)
       FileUtils.rm(decryption_source)
       FileUtils.rm(iv_path)
     else
