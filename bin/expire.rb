@@ -18,7 +18,8 @@ end
 # Create the directory structure in TOENCRYPT and add the symlinks
 opts[:file].each do |f|
   symlink_source = Pathname.new(File.join(TOENCRYPT, f)).cleanpath
-  FileUtils.mkdir_p(p) unless p.dirname.exist?
-  symlink_target = Pathname.new(File.join(File.expand_path(File.dirname __FILE__), UPLOADS, f)).cleanpath
-  FileUtils.ln_s(symlink_target, p)
+  symlink_source_dir = symlink_source.dirname
+  FileUtils.mkdir_p(symlink_source_dir) unless symlink_source_dir.exist?
+  symlink_target = Pathname.new(File.join(File.expand_path(File.dirname __FILE__), '..', UPLOADS, f)).cleanpath
+  FileUtils.ln_s(symlink_target, symlink_source)
 end
