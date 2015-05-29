@@ -66,8 +66,8 @@ class App < Sinatra::Base
                    upload_directory = upload_destination.dirname]
     directories.each {|dir| FileUtils.mkdir_p(dir) unless dir.exist?}
     # We need to figure out which key we used to encrypt the artifact
-    s3_get_path = Pathname.new(File.join(BUCKET, marker_link)).cleanpath
-    key = File.read(Pathname.new(File.join('keys', marker_link.to_s.split('/').first)).cleanpath)
+    s3_get_path = marker_link
+    key = File.read(Pathname.new(File.join('keys', marker_link.to_s.split('/')[1])).cleanpath)
     `s3cmd get 's3://#{s3_get_path}' '#{decryption_source}'`
     `s3cmd get 's3://#{s3_get_path}-iv' '#{decryption_source}-iv'`
     if CONFIG['encryption']

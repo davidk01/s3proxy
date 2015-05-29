@@ -62,6 +62,6 @@ files.each do |filename|
     FileUtils.rm(path, :force => true)
     FileUtils.rm(iv_path, :force => true)
     FileUtils.rm(upload_path, :force => true)
-    FileUtils.ln_s(upload_path.to_s.sub(UPLOADS, key_number), upload_path, :force => true)
+    FileUtils.ln_s(s3path, upload_path, :force => true)
   end
 end
