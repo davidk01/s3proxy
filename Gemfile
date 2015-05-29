@@ -3,6 +3,7 @@ source "https://rubygems.org"
 
 gem 'thin'
 gem 'sinatra'
+gem 'trollop'
 
 group :development do
   gem 'pry'
