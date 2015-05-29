@@ -6,7 +6,7 @@ require_relative '../lib/constants'
 
 files = Dir[File.join(TOENCRYPT, '**', '*')]
 key_number = Pathname.new(PRIVATEKEY).readlink.to_s
-key = File.read("keys/#{key_number}")
+key = File.read(File.join(KEYS, "#{key_number}"))
 # Acquire lock and encrypt the file into encrypting folder and then atomically move it into place
 files.each do |filename|
   path = Pathname.new(filename).cleanpath

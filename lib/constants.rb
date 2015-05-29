@@ -1,8 +1,9 @@
 require 'yaml'
 CONFIG = YAML.load(File.read File.join(File.expand_path(File.dirname __FILE__), '../', 'config.yaml'))
-BADSTRINGS = ['..', '?', '&', '|', ';', '$', '(', ')', '[', ']', "'", '"']
+BADSTRINGS = ['..', '?', '&', '|', ',', ';', '$', '(', ')', '[', ']', "'", '"']
 # Private key path for openssl encryption/decryption
-PRIVATEKEY = 'keys/latest'
+KEYS = 'keys'
+PRIVATEKEY = File.join(KEYS, 'latest')
 # Various directories for keeping track of uploaded and encrypted files
 LOCKS = 'locks'
 UPLOADS = 'uploads'
