@@ -1,3 +1,5 @@
+_Most of this is slightly untrue now. Updated dataflow incoming._
+
 Varnish will act as the entry point and cache layer because it is very good with shuttling connections and managing what
 happens when things 404. So Varnish sits in front of NGINX and the S3 proxy. For get requests we first try nginx and if
 that works then great we just serve the file. If it is a POST request (i.e. a file upload) it goes to the S3 proxy so
