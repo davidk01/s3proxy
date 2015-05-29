@@ -6,7 +6,7 @@ require_relative '../lib/constants'
 
 files = Dir[File.join(TOENCRYPT, '**', '*')]
 key_number = Pathname.new(PRIVATEKEY).readlink.to_s
-key = File.read("keys/#{key_nuymber}")
+key = File.read("keys/#{key_number}")
 # Acquire lock and encrypt the file into encrypting folder and then atomically move it into place
 files.each do |filename|
   path = Pathname.new(filename).cleanpath
@@ -43,16 +43,16 @@ files.each do |filename|
     end
     # Upload encrypted artifact to S3 and and remove it from file system
     if CONFIG['encryption']
-      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' && rm '#{path}'`
+      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}'`
       if $?.exitstatus > 0
         raise StandardError, "Something went wrong when uploading #{encrypted_path} to #{s3path}"
       end
-      `s3cmd put -F '#{iv_path}' 's3://#{s3path}-iv' && rm '#{iv_path}'`
+      `s3cmd put -F '#{iv_path}' 's3://#{s3path}-iv'`
       if $?.exitstatus > 0
         raise StandardError, "Something went wrong when uploading IV #{iv_path}."
       end
     else
-      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}' && rm '#{encrypted_path}' &7 rm '#{path}'`
+      `s3cmd put -F '#{encrypted_path}' 's3://#{s3path}'`
       if $?.exitstatus > 0
         raise StandardError, "Something went wrong when uploading #{encrypted_path} to #{s3path}."
       end
