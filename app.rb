@@ -39,10 +39,13 @@ class App < Sinatra::Base
     File.open(lock, File::RDWR | File::CREAT, 0644) do |f|
       f.flock(File::LOCK_EX)
       FileUtils.touch(uploading_path)
-      FileUtils.mv(tempfile, path, :force => true)
-      FileUtils.chmod("go+r", path)
-      symlink_source = Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), path)).cleanpath
-      FileUtils.rm(uploading_path)
+      begin
+        FileUtils.mv(tempfile, path, :force => true)
+        FileUtils.chmod("go+r", path)
+        symlink_source = Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), path)).cleanpath
+      ensure
+        FileUtils.rm(uploading_path)
+      end
     end
     "File saved\n"
   end
@@ -63,9 +66,11 @@ class App < Sinatra::Base
       return "We don't have a record of that file: #{source}."
     end
     marker_link = upload_destination.readlink
+    marker_link_upload_path = Pathname.new(File.join(upload_destination, marker_link)).cleanpath
     directories = [decryption_directory = decryption_source.dirname, 
                    upload_directory = upload_destination.dirname, 
-                   decryption_temp_dir = decryption_temp.dirname]
+                   decryption_temp_dir = decryption_temp.dirname, 
+                   marker_link_dir = marker_link_upload_path.dirname]
     directories.each {|dir| FileUtils.mkdir_p(dir) unless dir.exist?}
     # We need to figure out which key we used to encrypt the artifact
     s3_get_path = marker_link
@@ -82,11 +87,11 @@ class App < Sinatra::Base
       encrypted_data = File.read(decryption_source)
       decrypted_data = cipher.update(encrypted_data)
       File.open(decryption_temp, 'w') {|f| f.write(decrypted_data)}
-      FileUtils.mv(decryption_temp, upload_destination, :force => true)
+      FileUtils.mv(decryption_temp, marker_link_upload_path, :force => true)
       FileUtils.rm(decryption_source)
       FileUtils.rm(iv_path)
     else
-      FileUtils.mv(decryption_source, upload_destination, :force => true)
+      FileUtils.mv(decryption_source, marker_link_upload_path, :force => true)
     end
     send_file File.expand_path(upload_destination)
   end
