@@ -1,14 +1,20 @@
-require 'rubygems'
+require 'bundler/setup'
 require 'pathname'
 require 'fileutils'
 require 'openssl'
+require 'trollop'
 require_relative '../lib/constants'
+
+opts = Trollop::options do
+  opt :procs, "Number of processes that will be uploading to S3",
+    :required => true, :type => :int, :multi => false
+end
 
 files = Dir[File.join(TOENCRYPT, '**', '*')].reject {|f| File.directory?(f)}
 key_number = Pathname.new(PRIVATEKEY).readlink.to_s
 key = File.read(File.join(KEYS, "#{key_number}"))
 # Acquire lock and encrypt the file into encrypting folder and then atomically move it into place
-pids = files.each_slice(files.length / 5).map do |slice|
+pids = files.each_slice(files.length / opts[:procs]).map do |slice|
   fork do
     slice.each do |filename|
       path = Pathname.new(filename).cleanpath
