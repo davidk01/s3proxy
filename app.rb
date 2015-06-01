@@ -66,7 +66,7 @@ class App < Sinatra::Base
       return "We don't have a record of that file: #{source}."
     end
     marker_link = upload_destination.readlink
-    marker_link_upload_path = Pathname.new(File.join(upload_destination, marker_link)).cleanpath
+    marker_link_upload_path = Pathname.new(File.join(upload_destination.dirname, marker_link)).cleanpath
     directories = [decryption_directory = decryption_source.dirname, 
                    upload_directory = upload_destination.dirname, 
                    decryption_temp_dir = decryption_temp.dirname, 

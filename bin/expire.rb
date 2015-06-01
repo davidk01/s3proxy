@@ -13,7 +13,7 @@ paths = opts[:file].map {|f| Pathname.new(File.join(UPLOADS, f)).cleanpath}
 paths.each do |p|
   raise StandardError, "File does not exist #{p}." unless p.exist?
   if p.symlink?
-    filepath = Pathname.new(File.join(p, p.readlink)).cleanpath
+    filepath = Pathname.new(File.join(p.dirname, p.readlink)).cleanpath
     FileUtils.rm(filepath)
   end
 end
