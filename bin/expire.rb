@@ -14,7 +14,11 @@ paths.each do |p|
   raise StandardError, "File does not exist #{p}." unless p.exist?
   if p.symlink?
     filepath = Pathname.new(File.join(p.dirname, p.readlink)).cleanpath
-    FileUtils.rm(filepath)
+    begin
+      FileUtils.rm(filepath)
+    rescue Exception => e
+      STDERR.puts e
+    end
   end
 end
 
@@ -23,9 +27,14 @@ opts[:file].each do |f|
   symlink_target = Pathname.new(File.join(File.expand_path(File.dirname __FILE__), '..', UPLOADS, f)).cleanpath
   if symlink_target.symlink?
     STDOUT.puts "Nothing to do for #{f} because it has already been expired once."
+    FileUtils.rm(symlink_source)
+    next
   end
   symlink_source = Pathname.new(File.join(TOENCRYPT, f)).cleanpath
   symlink_source_dir = symlink_source.dirname
   FileUtils.mkdir_p(symlink_source_dir) unless symlink_source_dir.exist?
-  FileUtils.ln_s(symlink_target, symlink_source)
+  begin
+    FileUtils.ln_s(symlink_target, symlink_source)
+  rescue Exception => e
+  end
 end
