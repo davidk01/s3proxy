@@ -15,11 +15,12 @@ end
 queue = Queue.new
 key_number = Pathname.new(PRIVATEKEY).readlink.to_s
 key = File.read(File.join(KEYS, "#{key_number}"))
+log = File.open('encryptor.log', 'w')
 
 workers = (1..opts[:procs]).map do
   Thread.new do
-    begin
-      while true
+    while true
+      begin
         filename = queue.pop
         STDOUT.puts "Processing #{filename}."
         path = Pathname.new(filename).cleanpath
@@ -56,10 +57,10 @@ workers = (1..opts[:procs]).map do
         FileUtils.rm(iv_path, :force => true)
         FileUtils.rm(upload_path, :force => true)
         FileUtils.ln_s(s3path, upload_path, :force => true)
+      rescue Exception => e
+        STDERR.puts e
+        log.puts e
       end
-    rescue Exception => e
-      STDERR.puts e
-      raise
     end
   end
 end
@@ -68,7 +69,7 @@ Find.find(TOENCRYPT).each do |f|
   if !File.directory?(f)
     queue.push(f)
     if queue.length > 100
-      STDOUT.puts "Queue length too long sleeping 5 seconds."
+      STDOUT.puts "Queue length too long sleeping 10 seconds."
       sleep 10
     end
   end
