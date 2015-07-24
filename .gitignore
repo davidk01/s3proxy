@@ -1,0 +1,9 @@
+uploads/
+log/
+*.rpm
+*.swp
+.vagrant/
+to_encrypt/
+encrypting/
+encrypted/
+testfiles/

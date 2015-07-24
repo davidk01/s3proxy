@@ -1,0 +1,8 @@
+[Unit]
+Description=S3Proxy
+
+[Service]
+User=s3proxy
+WorkingDirectory=/opt/s3proxy
+ExecStart=/bin/bash -c 'export PATH=/opt/ruby-2.2.2/bin:$PATH; cd /opt/s3proxy; bundle exec rackup -P pid'
+ExecStop=/bin/bash -c 'export PATH=/opt/ruby-2.2.2/bin:$PATH; cd /opt/s3proxy; kill -INT $(cat pid)'
