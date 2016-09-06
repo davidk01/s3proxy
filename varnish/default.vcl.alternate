@@ -1,0 +1,30 @@
+vcl 4.0;
+
+# This should point at nginx
+backend default {
+  .host = "127.0.0.1";
+  .port = "8080";
+}
+
+# This should point at s3proxy
+backend s3proxy {
+  .host = "127.0.0.1";
+  .port = "9292";
+}
+
+# Anything that is not GET/HEAD goes to s3proxy
+sub vcl_recv {
+  set req.hash_always_miss = true;
+  set req.backend_hint = default;
+  if (req.method == "GET" || req.method == "HEAD") {
+    return (pass);
+  }
+  set req.backend_hint = s3proxy;
+  return (pass);
+}
+
+sub vcl_deliver {
+  if (req.method == "HEAD") {
+    set resp.http.Content-Length = 0;
+  }
+}
